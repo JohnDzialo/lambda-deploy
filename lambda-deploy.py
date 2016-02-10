@@ -147,7 +147,7 @@ def create_lambda_code_dictionary(encoded):
 
 def zip_lambda_function(context):
     #  Create a zip file of the current project for lambda deployment
-    archive = context.FUNCTION_NAME + ".zip"
+    archive = "bin/" + context.FUNCTION_NAME + ".zip"
     z = zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED)
     for dirname, subdirs, files in os.walk('.'):
         #  Omit directories and files specified in context from lists in-place

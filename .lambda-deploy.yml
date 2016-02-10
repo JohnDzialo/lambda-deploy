@@ -13,3 +13,4 @@ omit_directories:
 omit_files:
   - .gitignore
   - .gitlab-ci.yml
+  - README.md
