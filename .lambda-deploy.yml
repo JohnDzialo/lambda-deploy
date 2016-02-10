@@ -1,0 +1,15 @@
+function_name: notification-service
+runtime: nodejs
+description: "Send email template notifications through SES"
+timeout: 3
+memory_size: 128
+iam_role: arn:aws:iam::462322024086:role/default-lambda
+handler: index.handler
+region: us-east-1
+omit_directories:
+  - bin
+  - .git
+  - .idea
+omit_files:
+  - .gitignore
+  - .gitlab-ci.yml
