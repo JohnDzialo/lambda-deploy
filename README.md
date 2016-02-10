@@ -9,4 +9,6 @@ python lambda-deploy.py --env dev
 ## Installation
 
 apt-get install python
+
 pip install boto3
+
