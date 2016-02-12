@@ -23,9 +23,10 @@ class Context(object):
     VERSION = ""            # VERSION: current lambda function version published at time of create or update
     OMIT_DIRS = ""          # OMIT_DIRS: directories to omit from the zip file
     OMIT_FILES = ""         # OMIT_FILES: files to omit from the zip file
-    REGION = ""             # REGION: region where the lambda function existsexit
+    REGION = ""             # REGION: region where the lambda function exists
 
     def get_context_object(self):
+        # Get context object from the yaml file and passed argument --env at runtime
         parser = argparse.ArgumentParser(description='Deploy Lambda Function to Specific Environment')
         parser.add_argument('--env', required=True, help='Environment to Deploy Lambda Function: dev, stage, prod')
         args = parser.parse_args()
@@ -47,9 +48,11 @@ class Context(object):
 
 class Lambda(object):
     def __init__(self, region):
+        # AWS Lambda class
         self.l = boto3.client('lambda', region)
 
     def check_lambda_function_exists(self, context):
+        # Check if lambda function exists return True if it does, return False if it does not
         try:
             self.l.get_function(FunctionName=context.FUNCTION_NAME)
             print "Lambda Function %s exists" % context.FUNCTION_NAME
@@ -62,6 +65,7 @@ class Lambda(object):
                 print "Unexpected error in check_lambda_function_exists: %s" % e
 
     def check_lambda_function_alias_exists(self, context):
+        # Check if lambda alias exists return True if it does, return False if it does not
         try:
             self.l.get_alias(FunctionName=context.FUNCTION_NAME, Name=context.ENVIRONMENT)
             print "Lambda Function %s has alias %s" % (context.FUNCTION_NAME, context.ENVIRONMENT)
@@ -74,6 +78,7 @@ class Lambda(object):
                 print "Unexpected error in check_lambda_function_alias_exists: %s" % e
 
     def create_lambda_function(self, context):
+        # Create lambda function with Publish=True to ensure a new version is published
         resp = self.l.create_function(FunctionName=context.FUNCTION_NAME,
                                       Runtime=context.RUNTIME,
                                       Role=context.IAM_ROLE,
@@ -86,12 +91,14 @@ class Lambda(object):
         return resp
 
     def update_lambda_function(self, context):
+        # Update lambda function code with Publish=True to ensure a new version is published if code has changed
         resp = self.l.update_function_code(FunctionName=context.FUNCTION_NAME,
                                            ZipFile=context.ZIP_BYTES,
                                            Publish=True)
         return resp
 
     def update_lambda_function_configuration(self, context):
+        # Update lambda function configuration based off of context variables
         resp = self.l.update_function_configuration(FunctionName=context.FUNCTION_NAME,
                                                     Role=context.IAM_ROLE,
                                                     Handler=context.HANDLER,
@@ -101,35 +108,43 @@ class Lambda(object):
         return resp
 
     def publish_lambda_version(self, context):
+        # Publish a new lambda version for context.FUNCTION_NAME
+        # NOT RECOMMENDED FOR USE:  Publish=True in create_function or update_function_code
         resp = self.l.publish_version(FunctionName=context.FUNCTION_NAME)
         return resp
 
     def list_lambda_function_version(self, context):
+        # List lambda function versions by context.FUNCTION_NAME
         resp = self.l.list_versions_by_function(FunctionName=context.FUNCTION_NAME)
         return resp
 
     def list_lambda_function_aliases(self, context):
+        # List lambda function aliases by context.FUNCTION_NAME
         resp = self.l.list_aliases(FunctionName=context.FUNCTION_NAME)
         return resp
 
     def list_lambda_function_aliases_by_version(self, context):
+        # List lambda function aliases by context.FUNCTION_NAME and current context.VERSION
         resp = self.l.list_aliases(FunctionName=context.FUNCTION_NAME,
                                    FunctionVersion=context.VERSION)
         return resp
 
     def create_lambda_function_alias(self, context):
+        # Create alias, context.ENVIRONMENT, for Lambda function, context.FUNCTION_NAME, for current context.VERSION
         resp = self.l.create_alias(FunctionName=context.FUNCTION_NAME,
                                    Name=context.ENVIRONMENT,
                                    FunctionVersion=context.VERSION)
         return resp
 
     def update_lambda_function_alias(self, context):
+        # Update Lambda function, context.FUNCTION_NAME, with alias, context.ENVIRONMENT, for current context.VERSION
         resp = self.l.update_alias(FunctionName=context.FUNCTION_NAME,
                                    Name=context.ENVIRONMENT,
                                    FunctionVersion=context.VERSION)
         return resp
 
     def create_lambda_function_for_environment(self, context):
+        # Create lambda function, version it and apply an alias of context.ENVIRONMENT
         print "Creating lambda function: %s" % context.FUNCTION_NAME
         resp = self.create_lambda_function(context)
         context.VERSION=resp['Version']
@@ -144,18 +159,12 @@ class Lambda(object):
             print "Error in check_lambda_function_alias_exists: %s %s" % (context.FUNCTION_NAME, context.ENVIRONMENT)
 
     def update_lambda_function_for_environment(self, context):
+        # Update lambda function code, version it and apply an alias of context.ENVIRONMENT
         print "Updating lambda function: %s" % context.FUNCTION_NAME
         resp = self.update_lambda_function(context)
         self.update_lambda_function_configuration(context)
         print "Updated lambda version: %s" % resp['Version']
         context.VERSION = resp['Version']
-        resp = self.list_lambda_function_aliases(context)
-        #aliases = parse_current_version_aliases(context, resp)
-        #for a in aliases:
-        #    if a in ['dev', 'stage', 'prod']:
-        #        print "Version %s is already being used" % context.VERSION
-        #        print "There is a problem.  Exiting!"
-        #        exit()
         update = self.check_lambda_function_alias_exists(context)
         if update is True:
             print "Updating alias %s for function %s" % (context.ENVIRONMENT, context.FUNCTION_NAME)

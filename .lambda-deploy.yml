@@ -1,6 +1,6 @@
-function_name: notification-service
+function_name: test-lambda-deploy
 runtime: nodejs
-description: "Send email template notifications through SES"
+description: "Test lambda deploy"
 timeout: 3
 memory_size: 128
 iam_role: arn:aws:iam::462322024086:role/default-lambda
