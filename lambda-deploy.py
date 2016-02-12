@@ -8,21 +8,22 @@ import botocore
 
 
 class Context(object):
-    FUNCTION_NAME = ""
-    RUNTIME = ""
-    DESCRIPTION = ""
-    TIMEOUT = ""
-    MEMORY_SIZE = ""
-    IAM_ROLE = ""
-    HANDLER = ""
-    CODE = ""
-    ZIP_BYTES = ""
-    ZIP_DIRECTORY = ""
-    ENVIRONMENT = ""
-    VERSION = ""
-    OMIT_DIRS = ""
-    OMIT_FILES = ""
-    REGION = ""
+    # Context object contains variables to be used during lambda deployment
+    FUNCTION_NAME = ""      # FUNCTION_NAME: name of the lambda function to be created or updated
+    RUNTIME = ""            # RUNTIME: runtime environment lambda will invoke function as (options: nodejs, java, python)
+    DESCRIPTION = ""        # DESCRIPTION: short description of lambda function
+    TIMEOUT = ""            # TIMEOUT: time in seconds before the function will timeout in (default: 3)
+    MEMORY_SIZE = ""        # MEMORY_SIZE: how much memory in MB to allocate for lambda execution
+    IAM_ROLE = ""           # IAM_ROLE: full ARN for the IAM role to be applied on lambda during creation or update
+    HANDLER = ""            # HANDLE: function or module to be executed on invocation (default: index.handler)
+    CODE = ""               # CODE: Dictionary to store bytes of the function zipfile
+    ZIP_BYTES = ""          # ZIP_BYTES: bytes of the function zipfile
+    ZIP_DIRECTORY = ""      # ZIP_DIRECTORY: directory to zip up (NOT IN USE YET)
+    ENVIRONMENT = ""        # ENVIRONMENT: environment passed in through command line on each deploy (options: dev, stage, deploy, demo, prod)
+    VERSION = ""            # VERSION: current lambda function version published at time of create or update
+    OMIT_DIRS = ""          # OMIT_DIRS: directories to omit from the zip file
+    OMIT_FILES = ""         # OMIT_FILES: files to omit from the zip file
+    REGION = ""             # REGION: region where the lambda function existsexit
 
     def get_context_object(self):
         parser = argparse.ArgumentParser(description='Deploy Lambda Function to Specific Environment')
@@ -130,7 +131,8 @@ class Lambda(object):
 
     def create_lambda_function_for_environment(self, context):
         print "Creating lambda function: %s" % context.FUNCTION_NAME
-        self.create_lambda_function(context)
+        resp = self.create_lambda_function(context)
+        context.VERSION=resp['Version']
         update = self.check_lambda_function_alias_exists(context)
         if update is True:
             print "Updating alias %s for function %s" % (context.ENVIRONMENT, context.FUNCTION_NAME)
