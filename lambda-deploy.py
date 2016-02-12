@@ -1,5 +1,4 @@
 import argparse
-#import base64
 import os
 import yaml
 import zipfile
@@ -23,7 +22,7 @@ class Context(object):
     VERSION = ""            # VERSION: current lambda function version published at time of create or update
     OMIT_DIRS = ""          # OMIT_DIRS: directories to omit from the zip file
     OMIT_FILES = ""         # OMIT_FILES: files to omit from the zip file
-    REGION = ""             # REGION: region where the lambda function exists
+    REGION = ""             # REGION: AWS region where the lambda function exists
 
     def get_context_object(self):
         # Get context object from the yaml file and passed argument --env at runtime
@@ -180,9 +179,6 @@ def get_archive_encoded_bytes(archive):
     #  Open zip and read bytes to variable to pass to lambda code dictionary
     with open(archive, "rb") as f:
         zip_bytes = f.read()
-    #  Base64 encoding no longer necessary as boto3 handles conversion
-    #  Pass unencoded bytes
-    # encoded = base64.b64encode(zip_bytes)
     return zip_bytes
 
 
