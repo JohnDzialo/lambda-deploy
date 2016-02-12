@@ -17,6 +17,7 @@ class Context(object):
     HANDLER = ""
     CODE = ""
     ZIP_BYTES = ""
+    ZIP_DIRECTORY = ""
     ENVIRONMENT = ""
     VERSION = ""
     OMIT_DIRS = ""
@@ -127,6 +128,42 @@ class Lambda(object):
                                    FunctionVersion=context.VERSION)
         return resp
 
+    def create_lambda_function_for_environment(self, context):
+        print "Creating lambda function: %s" % context.FUNCTION_NAME
+        self.create_lambda_function(context)
+        update = self.check_lambda_function_alias_exists(context)
+        if update is True:
+            print "Updating alias %s for function %s" % (context.ENVIRONMENT, context.FUNCTION_NAME)
+            self.update_lambda_function_alias(context)
+        elif update is False:
+            print "Creating alias %s for function %s" % (context.ENVIRONMENT, context.FUNCTION_NAME)
+            self.create_lambda_function_alias(context)
+        else:
+            print "Error in check_lambda_function_alias_exists: %s %s" % (context.FUNCTION_NAME, context.ENVIRONMENT)
+
+    def update_lambda_function_for_environment(self, context):
+        print "Updating lambda function: %s" % context.FUNCTION_NAME
+        resp = self.update_lambda_function(context)
+        self.update_lambda_function_configuration(context)
+        print "Updated lambda version: %s" % resp['Version']
+        context.VERSION = resp['Version']
+        resp = self.list_lambda_function_aliases(context)
+        #aliases = parse_current_version_aliases(context, resp)
+        #for a in aliases:
+        #    if a in ['dev', 'stage', 'prod']:
+        #        print "Version %s is already being used" % context.VERSION
+        #        print "There is a problem.  Exiting!"
+        #        exit()
+        update = self.check_lambda_function_alias_exists(context)
+        if update is True:
+            print "Updating alias %s for function %s" % (context.ENVIRONMENT, context.FUNCTION_NAME)
+            self.update_lambda_function_alias(context)
+        elif update is False:
+            print "Creating alias %s for function %s" % (context.ENVIRONMENT, context.FUNCTION_NAME)
+            self.create_lambda_function_alias(context)
+        else:
+            print "Error in check_lambda_function_alias_exists: %s %s" % (context.FUNCTION_NAME, context.ENVIRONMENT)
+
 
 def get_archive_encoded_bytes(archive):
     #  Open zip and read bytes to variable to pass to lambda code dictionary
@@ -179,93 +216,13 @@ def main():
     archive = zip_lambda_function(context)
     encoded = get_archive_encoded_bytes(archive)
     check = l.check_lambda_function_exists(context)
-    env = context.ENVIRONMENT
+    context.ZIP_BYTES = encoded
+    context.CODE = create_lambda_code_dictionary(encoded)
 
-    if check is True and env == 'dev':
-        print "Updating lambda function:  %s in %s" % (context.FUNCTION_NAME, env)
-        context.ZIP_BYTES = encoded
-        resp = l.update_lambda_function(context)
-        l.update_lambda_function_configuration(context)
-        print "Updated lambda version: %s" % resp['Version']
-        context.VERSION = resp['Version']
-        resp = l.list_lambda_function_aliases(context)
-        aliases = parse_current_version_aliases(context, resp)
-        for a in aliases:
-            if a in ['dev', 'stage', 'prod']:
-                print "Version %s is already being used" % context.VERSION
-                print "There is a problem.  Exiting!"
-                exit()
-        update = l.check_lambda_function_alias_exists(context)
-        if update is True:
-            print "Updating alias %s for function %s" % (context.ENVIRONMENT, context.FUNCTION_NAME)
-            l.update_lambda_function_alias(context)
-        elif update is False:
-            print "Creating alias %s for function %s" % (context.ENVIRONMENT, context.FUNCTION_NAME)
-            l.create_lambda_function_alias(context)
-        else:
-            print "Error in check_lambda_function_alias_exists: %s %s" % (context.FUNCTION_NAME, context.ENVIRONMENT)
-
-    elif check is True and env == 'stage':
-        print "Updating lambda function:  %s in %s" % (context.FUNCTION_NAME, env)
-        context.ZIP_BYTES = encoded
-        resp = l.update_lambda_function(context)
-        l.update_lambda_function_configuration(context)
-        print "Updated lambda version: %s" % resp['Version']
-        context.VERSION = resp['Version']
-        resp = l.list_lambda_function_aliases(context)
-        aliases = parse_current_version_aliases(context, resp)
-        for a in aliases:
-            if a in ['stage', 'prod']:
-                print "Version %s is already being used" % context.VERSION
-                print "There is a problem.  Exiting!"
-                exit()
-        update = l.check_lambda_function_alias_exists(context)
-        if update is True:
-            print "Updating alias %s for function %s" % (context.ENVIRONMENT, context.FUNCTION_NAME)
-            l.update_lambda_function_alias(context)
-        elif update is False:
-            print "Creating alias %s for function %s" % (context.ENVIRONMENT, context.FUNCTION_NAME)
-            l.create_lambda_function_alias(context)
-        else:
-            print "Error in check_lambda_function_alias_exists: %s %s" % (context.FUNCTION_NAME, context.ENVIRONMENT)
-
-    elif check is True and env == 'prod':
-        print "Updating lambda function:  %s in %s" % (context.FUNCTION_NAME, env)
-        context.ZIP_BYTES = encoded
-        resp = l.update_lambda_function(context)
-        l.update_lambda_function_configuration(context)
-        print "Updated lambda version: %s" % resp['Version']
-        context.VERSION = resp['Version']
-        resp = l.list_lambda_function_aliases(context)
-        aliases = parse_current_version_aliases(context, resp)
-        for a in aliases:
-            if a in ['prod']:
-                print "Version %s is already being used" % context.VERSION
-                print "There is a problem.  Exiting!"
-                exit()
-        update = l.check_lambda_function_alias_exists(context)
-        if update is True:
-            print "Updating alias %s for function %s" % (context.ENVIRONMENT, context.FUNCTION_NAME)
-            l.update_lambda_function_alias(context)
-        elif update is False:
-            print "Creating alias %s for function %s" % (context.ENVIRONMENT, context.FUNCTION_NAME)
-            l.create_lambda_function_alias(context)
-        else:
-            print "Error in check_lambda_function_alias_exists: %s %s" % (context.FUNCTION_NAME, context.ENVIRONMENT)
-
-    elif check is False and env == 'dev':
-        print "Creating lambda function: %s" % context.FUNCTION_NAME
-        context.CODE = create_lambda_code_dictionary(encoded)
-        l.create_lambda_function(context)
-        update = l.check_lambda_function_alias_exists(context)
-        if update is True:
-            print "Updating alias %s for function %s" % (context.ENVIRONMENT, context.FUNCTION_NAME)
-            l.update_lambda_function_alias(context)
-        elif update is False:
-            print "Creating alias %s for function %s" % (context.ENVIRONMENT, context.FUNCTION_NAME)
-            l.create_lambda_function_alias(context)
-        else:
-            print "Error in check_lambda_function_alias_exists: %s %s" % (context.FUNCTION_NAME, context.ENVIRONMENT)
+    if check is True:
+        l.update_lambda_function_for_environment(context)
+    elif check is False:
+        l.create_lambda_function_for_environment(context)
     else:
         print "Unknown Error in check_lambda_function_exists"
         exit()

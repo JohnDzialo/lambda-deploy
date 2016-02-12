@@ -5,6 +5,7 @@ timeout: 3
 memory_size: 128
 iam_role: arn:aws:iam::462322024086:role/default-lambda
 handler: index.handler
+zip_directory: ../
 region: us-east-1
 omit_directories:
   - bin
