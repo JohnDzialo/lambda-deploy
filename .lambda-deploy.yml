@@ -3,7 +3,7 @@ runtime: nodejs
 description: "Test lambda deploy"
 timeout: 3
 memory_size: 128
-iam_role: arn:aws:iam::462322024086:role/default-lambda
+iam_role: arn:aws:iam::0000000000000000:role/default-lambda
 handler: index.handler
 zip_directory: ../
 region: us-east-1
