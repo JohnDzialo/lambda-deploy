@@ -5,7 +5,7 @@ Lambda deployment tool used to create, update, version and alias lambda function
 
 ## Code Example
 
-Edit the .lambda-deploy.yml with proper confiuration settings for your deployment
+Edit the .lambda-deploy.yml with proper configuration settings for your deployment
 
 python lambda-deploy.py --env dev
 
